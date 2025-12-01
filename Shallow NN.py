@@ -59,4 +59,39 @@ class ShallowNeuralNetwork:
 
         return dw1, db1, dw2, db2
 
+    def update_weights(self, dw1,db1, dw2, db2):
+        '''Gradient descent update'''
+        self.w1 -= self.learning_rate * dw1
+        self.b1 -= self.learning_rate * db1
+        self.w2 -= self.learning_rate * dw2
+        self.b2 -= self.learning_rate * db2
+
+    def train(self, x, Y, epochs=100):
+        '''Training loop:
+        Forward pass -> compute loss -> backward pass -> update weight'''
+        m = x.shape[0]
+        for epoch in range(epochs):
+            output = self.forward_pass(x)
+            dw1, db1, dw2, db2 = self.backward_prob(Y, m)
+            self.update_weights(dw1, db1, dw2, db2)
+
+    def predict(self, x):
+        '''Model inference'''
+        return self.forward_pass(x)
     
+
+if __name__ == '__main__':
+    # generate synthetic data
+    np.random.seed(1)
+    x = np.random.randn(100, 10)
+    y = np.eye(3)[np.random.randint(0, 3, 100)]
+
+    print('='*60)
+    print(f'SHALLOW NEURAL NETWORK')
+    print('='*50)
+    shallow_nn = ShallowNeuralNetwork(hidden_units=20, input_size=10, output_size=3)
+    shallow_nn.train(x, y, epochs=1000)
+
+    predictions = shallow_nn.predict(x[:5])
+    print(f'Sample predictions shape: {predictions.shape}')
+    print(f'First Prediction : {predictions[0]}')
