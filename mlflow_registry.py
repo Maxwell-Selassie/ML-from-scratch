@@ -30,3 +30,30 @@ with mlflow.start_run(run_name='RegressionModel-ModelRegistry'):
         input_example=X_train,
         registered_model_name='sklearn-randomforest-reg-model'
     )
+
+from mlflow import MlflowClient
+
+client = MlflowClient()
+
+model_name = 'sklearn-randomforest-reg-model'
+model_version_alias = 'the_best_model_ever'
+
+client.set_registered_model_alias(
+    model_name, model_version_alias, '1'
+)
+
+# Get information about the model
+model_info = client.get_model_version_by_alias(model_name, model_version_alias)
+model_tags = model_info.tags
+print(model_tags)
+
+model_uri = f'models:/{model_name}@{model_version_alias}'
+model = mlflow.sklearn.load_model(model_uri)
+
+print(model)
+
+# generate a new dataset for prediction and predict
+X_new, _ = make_regression(n_features=4, n_informative=2, random_state=2, shuffle=False)
+y_pred_new = model.predict(X_new)
+
+print(y_pred_new)
