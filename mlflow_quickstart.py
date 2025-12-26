@@ -1,34 +1,32 @@
+
 import mlflow
 
-mlflow.set_experiment('Quickstart tutorial')
-
-import pandas as pd
 from sklearn import datasets
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.ensemble import RandomForestClassifier
 
-# load iris dataset
-X, y = datasets.load_iris(return_X_y=True)
+mlflow.set_experiment('Hyperparameter_Tuning')
 
-# Split the dataset into train and test splits
+digits = datasets.load_digits()
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, stratify=y, random_state=42
+    digits.data, digits.target, test_size=0.2, stratify=digits.target, random_state=1
 )
 
-# define model hyperparameters
-params = {
-    'solver': 'lbfgs',
-    'max_iter':2000,
-    'multi_class':'auto',
-    'random_state':1
+mlflow.sklearn.autolog(max_tuning_runs=10)
+
+params_grid = {
+    'n_estimators' : [100,150,200],
+    'max_depth' : [3, 5, 7, None],
+    'min_samples_split' : [2, 5, 10]
 }
 
-# enable autologging for scikit-learn
-mlflow.autolog()
+with mlflow.start_run(run_name='RF Hyperparameter Tuning'):
+    rfc = RandomForestClassifier(random_state=2)
+    grid_search = GridSearchCV(rfc, params_grid, cv=5, scoring='accuracy', n_jobs=-1)
+    grid_search.fit(X_train, y_train)
 
-# train model
-print(f'Training model...')
-lr = LogisticRegression(**params)
-lr.fit(X_train, y_train)
-print(f'Model training completed...')
+    # evaluation metrics
+    best_score = grid_search.score(X_test, y_test)
+    print(f'Best params: {grid_search.best_params_}')
+    print(f'Best CV score: {grid_search.best_score_:.3f}')
+    print(f'Test score: {best_score:.2f}')
